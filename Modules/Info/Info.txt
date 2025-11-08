@@ -1,0 +1,4 @@
+Seamhanian Archives — Info
+-------------------------
+Welcome! This is the Info tab.
+Add files here: Modules/Info/Info.txt
