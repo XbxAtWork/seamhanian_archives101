@@ -119,11 +119,43 @@ class NewsDetailScreen(Screen):
             Static(f"[bold cyan]{self.title}[/bold cyan]\n\n{self.content}", id="article_content")
         )
 
+import uuid
+from datetime import datetime
+from textual.widgets import Static, ListView, ListItem
+from textual.containers import ScrollableContainer
+from textual import events
+
 class NewsTab(Static):
+    """Fetches news from Discord channel, newest first, supports refresh and selection."""
+
     def compose(self):
+        # Article overlay (hidden by default)
         self.article_overlay = Static("", id="article_overlay")
         self.article_overlay.display = False
 
+        # Main list of news
+        self.list_view = ListView(id="news_list")
+        yield self.list_view
+        yield self.article_overlay
+
+    def on_mount(self):
+        self.load_news()
+
+import uuid
+from datetime import datetime
+from textual.widgets import Static, ListView, ListItem
+from textual.containers import ScrollableContainer
+from textual import events
+
+class NewsTab(Static):
+    """Fetches news from Discord channel, newest first, supports refresh and selection."""
+
+    def compose(self):
+        # Article overlay (hidden by default)
+        self.article_overlay = Static("", id="article_overlay")
+        self.article_overlay.display = False
+
+        # Main list of news
         self.list_view = ListView(id="news_list")
         yield self.list_view
         yield self.article_overlay
@@ -132,19 +164,19 @@ class NewsTab(Static):
         self.load_news()
 
     def load_news(self):
+        """Fetch messages from Discord and populate the ListView."""
+        # Remember currently selected Discord ID to restore selection
         selected_id = None
-        if hasattr(self, "list_view"):
-            for child in self.list_view.children:
-                if hasattr(child, "data") and child.data:
-                    selected_id = child.data.get("discord_id")
-                    break
+        if hasattr(self, "list_view") and self.list_view.index is not None:
+            item = self.list_view.get_item_at_index(self.list_view.index)
+            if item and hasattr(item, "data"):
+                selected_id = item.data.get("discord_id")
 
+        # Clear previous items
         self.list_view.clear()
 
         if not DISCORD_TOKEN or not DISCORD_CHANNEL_ID:
-            self.list_view.append(
-                ListItem(Static("[red]Discord token or channel ID not set in .env[/red]"))
-            )
+            self.list_view.append(ListItem(Static("[red]Discord token or channel ID not set in .env[/red]")))
             return
 
         url = f"https://discord.com/api/v10/channels/{DISCORD_CHANNEL_ID}/messages?limit=50"
@@ -155,10 +187,12 @@ class NewsTab(Static):
             resp.raise_for_status()
             messages = resp.json()
 
-            # Sort newest first
+            #New:
             messages.sort(key=lambda m: m.get("timestamp", ""), reverse=True)
 
-            for msg in messages:
+            restore_index = 0
+
+            for idx, msg in enumerate(messages):
                 content = msg.get("content", "").strip()
                 if not content:
                     continue
@@ -177,7 +211,7 @@ class NewsTab(Static):
                     except Exception:
                         pass
 
-                safe_id = f"msg_{uuid.uuid4().hex}"  # Always unique
+                safe_id = f"msg_{uuid.uuid4().hex}"
 
                 item = ListItem(
                     Static(f"[bold green]{title}[/bold green] by [cyan]{author}[/cyan]\n[dim]{timestamp_display}[/dim]"),
@@ -191,20 +225,26 @@ class NewsTab(Static):
                     "discord_id": msg["id"]
                 }
 
+                if selected_id and msg["id"] == selected_id:
+                    restore_index = idx
+
                 self.list_view.append(item)
 
-            if selected_id:
-                for idx, child in enumerate(self.list_view.children):
-                    if hasattr(child, "data") and child.data and child.data.get("discord_id") == selected_id:
-                        self.list_view.index = idx
-                        break
-            else:
-                self.list_view.index = 0
-
+            self.list_view.index = restore_index
             # self.list_view.focus()
 
         except Exception as e:
             self.list_view.append(ListItem(Static(f"[red]Error fetching news: {e}[/red]")))
+
+    def on_list_view_selected(self, event: ListView.Selected):
+        selected = event.item
+        if not hasattr(selected, "data") or not selected.data:
+            return
+        overlay_content = f"[bold cyan]{selected.data['title']}[/bold cyan]\n\n{selected.data['body']}\n\n[dim]Press 'q' to exit article[/dim]"
+        self.article_overlay.update(overlay_content)
+        self.article_overlay.display = True
+        self.list_view.display = False
+        self.article_overlay.focus()
 
 class UploadTab(Static):
     def compose(self) -> ComposeResult:
