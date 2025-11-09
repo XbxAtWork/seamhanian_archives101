@@ -32,4 +32,4 @@ except ModuleNotFoundError:
     subprocess.check_call([venv_python, "-m", "pip", "install", "-r", "requirements.txt"])
 
 # Step 4: Run the main SIP app
-subprocess.check_call([venv_python, os.path.join(PROJECT_ROOT, "z.py")])
+subprocess.check_call([venv_python, os.path.join(PROJECT_ROOT, "main.py")])

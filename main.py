@@ -51,46 +51,44 @@ def wait_key():
     finally:
         termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
 
-
 def intro():
     console.clear()
     width = console.width
     height = console.height
 
-    # Center the title horizontally
-    centered_title = "\n".join(line.center(width) for line in TITLE_ART.splitlines())
-
-    # Panel for SIP info
-    panel_content = "[bold cyan]Seamhanian Information Program (SIP)[/bold cyan]\n[dim]Initializing...[/dim]"
-    panel = Panel(panel_content, subtitle="v1.0 for all your news needs", box=box.ROUNDED, padding=(1, 4))
-
-    # Estimate vertical positions
-    title_lines = len(TITLE_ART.splitlines())
-    panel_lines = panel_content.count("\n") + 2  # +2 for padding inside panel
-    total_content_height = title_lines + panel_lines + 5  # additional spacing
-    top_padding = max((height - total_content_height) // 2, 0)
-
-    # Print title and panel with top padding
-    console.print("\n" * top_padding)
-    console.print(Align.center(f"[bold cyan]{centered_title}[/bold cyan]"))
-    console.print(Align.center(panel))
-
-    # Old-school giant progress bar
-    bar_width = min(width - 20, 60)  # restrict width
-    with Progress(
-        TextColumn("[bold green]Loading modules...[/bold green]"),
-        BarColumn(bar_width=bar_width, complete_style="green", finished_style="green", pulse_style="green"),
-        transient=True,
-    ) as progress:
-        task = progress.add_task("", total=100)
-        for _ in range(100):
-            sleep(0.02)
-            progress.update(task, advance=1)
+    title_lines = TITLE_ART.strip().splitlines()
+    for line in title_lines:
+        console.print(line.center(width), style="bold cyan")
 
     console.print("\n")
-    console.print(Align.center("[bold green]✔ Ready.[/bold green]"))
-    wait_key()
 
+    panel_content = "[bold cyan]Seamhanian Information Program (SIP)[/bold cyan]\n[dim]Initializing...[/dim]"
+    panel = Panel(panel_content, subtitle="v1 for all your news needs", box=box.ROUNDED, padding=(1, 4))
+    console.print(Align.center(panel))
+
+    console.print("\n")
+
+    bar_width = min(50, width - 20)
+    filled_char = "█"
+    empty_char = " "
+    brackets = "[]"
+    bar_total_width = bar_width + 2
+    left_padding = (width - bar_total_width) // 2
+
+    for i in range(bar_width + 1):
+        filled = filled_char * i
+        empty = empty_char * (bar_width - i)
+        bar_line = f"{brackets[0]}[green]{filled}[/green]{empty}{brackets[1]}"
+        console.print(" " * left_padding + bar_line, end="\r", markup=True)
+        sleep(0.03)
+
+    console.print()
+
+    ready_msg = "[bold green]✔ Ready.[/bold green]"
+    console.print(Align.center(ready_msg, vertical="middle", style="bold green"), markup=True)
+
+    wait_key()
+    
 # Tabs:
 class InfoTab(ScrollableContainer):
     def compose(self):
