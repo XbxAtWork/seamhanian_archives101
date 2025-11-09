@@ -1,10 +1,4 @@
 #!/usr/bin/env python3
-"""
-Seamhanian Information Portal (SIP)
-- CKAN-style intro
-- Resizable Textual UI with tabs (Info, News, Upload)
-- News stored via Discord bot on a private server
-"""
 
 import os
 import sys
@@ -18,6 +12,9 @@ from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, BarColumn, TextColumn, TimeElapsedColumn
 from rich.panel import Panel
 from rich import box
+from rich.align import Align
+from rich.panel import Panel
+from time import sleep
 from textual.app import App, ComposeResult
 from textual.widgets import Header, Footer, Static, TabbedContent, TabPane, ListView, ListItem, Input
 from textual.containers import ScrollableContainer
@@ -45,7 +42,7 @@ TITLE_ART = r"""
 
 #Intro: 
 def wait_key():
-    console.print("\n[bold yellow]Press any key to continue...[/bold yellow]")
+    console.print(Align.center("\n[bold yellow]Press any key to continue...[/bold yellow]"))
     fd = sys.stdin.fileno()
     old_settings = termios.tcgetattr(fd)
     try:
@@ -54,28 +51,44 @@ def wait_key():
     finally:
         termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
 
+
 def intro():
     console.clear()
     width = console.width
+    height = console.height
+
+    # Center the title horizontally
     centered_title = "\n".join(line.center(width) for line in TITLE_ART.splitlines())
-    console.print(f"[bold cyan]{centered_title}[/bold cyan]\n")
-    console.print(Panel.fit(
-        "[bold cyan]Seamhanian Information Program (SIP)[/bold cyan]\n[dim]Initializing...[/dim]",
-        subtitle="v0.5",
-        box=box.ROUNDED,
-    ))
+
+    # Panel for SIP info
+    panel_content = "[bold cyan]Seamhanian Information Program (SIP)[/bold cyan]\n[dim]Initializing...[/dim]"
+    panel = Panel(panel_content, subtitle="v1.0 for all your news needs", box=box.ROUNDED, padding=(1, 4))
+
+    # Estimate vertical positions
+    title_lines = len(TITLE_ART.splitlines())
+    panel_lines = panel_content.count("\n") + 2  # +2 for padding inside panel
+    total_content_height = title_lines + panel_lines + 5  # additional spacing
+    top_padding = max((height - total_content_height) // 2, 0)
+
+    # Print title and panel with top padding
+    console.print("\n" * top_padding)
+    console.print(Align.center(f"[bold cyan]{centered_title}[/bold cyan]"))
+    console.print(Align.center(panel))
+
+    # Old-school giant progress bar
+    bar_width = min(width - 20, 60)  # restrict width
     with Progress(
-        SpinnerColumn(style="bold green"),
-        TextColumn("[progress.description]{task.description}"),
-        BarColumn(),
-        TimeElapsedColumn(),
+        TextColumn("[bold green]Loading modules...[/bold green]"),
+        BarColumn(bar_width=bar_width, complete_style="green", finished_style="green", pulse_style="green"),
         transient=True,
     ) as progress:
-        task = progress.add_task("Loading modules...", total=100)
+        task = progress.add_task("", total=100)
         for _ in range(100):
-            sleep(0.01)
+            sleep(0.02)
             progress.update(task, advance=1)
-    console.print("[bold green]✔ Ready.[/bold green]\n")
+
+    console.print("\n")
+    console.print(Align.center("[bold green]✔ Ready.[/bold green]"))
     wait_key()
 
 # Tabs:
