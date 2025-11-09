@@ -1,4 +1,17 @@
-Seamhanian Archives — Info
--------------------------
-Welcome! This is the Info tab.
-Add files here: Modules/Info/Info.txt
+Welcome to the Seamhanian Information Program!
+
+                Information
+----------------------------------------------
+
+You will find all kinds of news here!
+
+To begin you must press the news button at the top
+
+Press any news or the black space to select the bottom
+part.
+
+You may press the up and down arrow keys to scroll through the news.
+
+Press enter or by mouse to your desired article.
+
+Scroll with mouse or use the rectangle bar in the right to scroll down or up.
